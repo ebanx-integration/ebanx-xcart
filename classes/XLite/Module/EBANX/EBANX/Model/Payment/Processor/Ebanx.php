@@ -47,7 +47,7 @@ protected function getFormURL()
          $checkoutURL = $response->redirect_url;
     }
     
-   $this->debug_to_console($response);
+   
    //return 'https://www.ebanx.com';
    return $checkoutURL;
 }
@@ -80,35 +80,65 @@ protected function getFormMethod()
 
 
 	public function processReturn(\XLite\Model\Payment\Transaction $transaction)
-	{  /*
+	{  
 
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        parent::processReturn($transaction);
 
-	    parent::processReturn($transaction);
+       require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
 
-        $merchant_payment_code = $_GET["merchant_payment_code"];
-        $hash                  = $_GET["hash"];
+        $integrationkey = $this->getSetting('integrationkey');
 
-        $query = \Ebanx\Ebanx::doQuery($hash);
+           \Ebanx\Config::set(array(
+        'integrationKey' => $integrationkey, //'d55ffec9c19a2891716dad68732dade9a312a6aeb7c874ead4a8c56dff4d7c38a49c51d4977827e7d61bb9eee3b2696bcc6a', //$this->getSetting('integrationkey'),
+        'testMode' =>  $this->getSetting('test')
+        
+            ) );
+            
+        //require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
 
-        $this->debug_to_console($merchant_payment_code);
+        
+
+        $hash = \XLite\Core\Request::getInstance()->hash;
+
+
+        //$hash = $request->hash;
+        $query = \Ebanx\Ebanx::doQuery(array('integration_key'  => \Ebanx\Config::getIntegrationKey(),
+                                             'hash'             => $hash
+                                                                                    
+                                             )
+        );
+
+        //var_dump($request);
+        //var_dump($hash);
+        
+        var_dump(\Ebanx\Config::getIntegrationKey());
+        
+        var_dump($query);
+        
+        //var_dump($hash);
+        //$var_str = var_export($request, true);
+       /* $var = "<?php\n\n\$$text = $var_str;\n\n?>";
+        file_put_contents('filename.php', $var);*/
+        
+
+        
 
 
 
 
-	 */
-	    
-	 /*
-	    $status = ('Completed' == $request->status)
-	        ? $transaction::STATUS_SUCCESS
-	        : $transaction::STATUS_FAILED;
-	 
-	    if (isset($request->error_description)) {
-	        \XLite\Core\OrderHistory::getInstance()->registerTransaction($this->transaction->getOrder()->getOrderId(), 'Error description: ' . $request->error_description);
-	        $transaction->setDataCell('status', $request->error_description, null, 'C');
-	    }
-	 
-	    $this->transaction->setStatus($status);*/
+     
+        
+      
+        $status = ('PE' == $query->payment->status)
+            ? $transaction::STATUS_PENDING
+            : $transaction::STATUS_SUCCESS;
+     
+        if (isset($request->error_code)) {
+            \XLite\Core\OrderHistory::getInstance()->registerTransaction($this->transaction->getOrder()->getOrderId(), 'Error description: ' . $query->status_message);
+            $transaction->setDataCell('status', $query->status_message, null, 'C');
+        }
+     
+        $this->transaction->setStatus($status);
             /*$status = ('CO' == $request->status)
                                     ? $transaction::STATUS_SUCCESS
                                     : $transaction::STATUS_FAILED;
@@ -123,7 +153,6 @@ protected function getFormMethod()
                           // this should not happen. Only if you called your URL manually. EBANX will always pass the hashishe cigarette
                          die("Empty hash in the response URL");
                         }*/
-                        return true;
 	}
 
 
