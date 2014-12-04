@@ -4,21 +4,17 @@ namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
 class Ebanx extends \XLite\Model\Payment\Base\WebBased
 {
 
- public function setConfig(){
 
+// protected function doInitialPayment(){
+//     parent::doInitialPayment();
+//     header("location: " . $this->getFormURL());
+// }
 
-    \Ebanx\Config::set(array(
-        'integrationKey' => $this->getSetting('integrationkey'),
-        'testMode' =>  $this->getSetting('test'),
-     ) );
-
-
-    }
-
-protected function doInitialPayment(){
-    parent::doInitialPayment();
-    header("location: " . $this->getFormURL());
+protected function assembleFormBody()
+{
+    return true;
 }
+
 
 
 protected function getFormURL()
@@ -34,53 +30,259 @@ protected function getFormURL()
         'testMode' =>  $this->getSetting('test'),
         ) );
 
-    
-    //var_dump($params);
+        var_dump($this->getSetting('integrationkey'));
+        var_dump($this->getCallbackURL(null, true));
+        var_dump($this->getCallbackURL('hash_codes'));
+        die;
 
     $response = \Ebanx\Ebanx::doRequest($params);
     //$url = \XLite\Core\Session::getInstance()->continueURL;
-    var_dump($response);
-    var_dump($url);
+
     //$this->debug_to_console($response);
+
+
     if($response->status == 'SUCCESS')
     {
          $checkoutURL = $response->redirect_url;
     }
-    
+
+    // var_dump($params);
+    // var_dump($response);
+
    $this->debug_to_console($response);
-   //return 'https://www.ebanx.com';
    return $checkoutURL;
+
 }
 
- 
+    public function processReturn(\XLite\Model\Payment\Transaction $transaction)
+    {  
+        parent::processReturn($transaction);
+       require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+                $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
+        $integrationkey = $method->getSetting('integrationkey');
+        $test = $method->getSetting('test');
+
+           \Ebanx\Config::set(array(
+        'integrationKey' => $integrationkey, //'d55ffec9c19a2891716dad68732dade9a312a6aeb7c874ead4a8c56dff4d7c38a49c51d4977827e7d61bb9eee3b2696bcc6a', //$this->getSetting('integrationkey'),
+        'testMode' =>  $test
+        
+            ) );
+            
+
+
+            /*
+            * LINK DE RETORNO https://localhost/ebanx-xcart/?target=payment_return&txn_id_name=merchant_payment_code&hash=547f61a258693d74d979eae9ccffb0d00b5b272f9489efa3&merchant_payment_code=36&payment_type_code=boleto
+              LINK DE CALLBACK: https://localhost/ebanx-xcart/?target=callback&txn_id_name=hash_codes
+                
+            */
+        //require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        
+        $operation = \XLite\Core\Request::getInstance()->operation;
+
+        if($operation == 'payment_status_change')
+        {
+            $hashes = \XLite\Core\Request::getInstance()->hash_codes;
+            $hashes = explode(',', $hashes);
+            if (isset($hashes) && $hashes != null)
+            {
+                foreach ($hashes as $hash)
+                {
+                    $response = \Ebanx\Ebanx::doQuery(array('integration_key'  => $this->getSetting('integrationkey'), //\Ebanx\Config::getIntegrationKey(),
+                                             'hash'             => $hash
+                                                                                    
+                                             )
+        );
+                    if ($response->status == 'SUCCESS')
+                    {
+                        if($response->payment->status == 'CO')
+                         {   
+                             
+                             $status = $transaction::STATUS_SUCCESS;
+                            echo 'Payment CO';
+                            die;
+                         }
+                        if($response->payment->status == 'CA')
+                        {   
+                            $status = $transaction::STATUS_CANCELED;
+                             echo 'Payment CA';
+                             die;
+                        }
+                     }
+                     else 
+                    {
+                        echo 'Failure in contacting EBANX';
+                    }
+                }   
+            }
+
+        }
+        else
+        {
+            $status = $transaction::STATUS_PENDING;
+        }
+
+        $hash = \XLite\Core\Request::getInstance()->hash;
+        //$hash = $request->hash;
+        $query = \Ebanx\Ebanx::doQuery(array('integration_key'  => $this->getSetting('integrationkey'), //\Ebanx\Config::getIntegrationKey(),
+                                             'hash'             => $hash
+                                                                                    
+                                             )
+        );
+        //var_dump($request);
+        //var_dump($hash);
+        
+        // var_dump(\Ebanx\Config::getIntegrationKey());
+        
+        // var_dump($query);
+        // var_dump($query->payment->status);
+        
+        //var_dump($hash);
+        //$var_str = var_export($request, true);
+       /* $var = "<?php\n\n\$$text = $var_str;\n\n?>";
+        file_put_contents('filename.php', $var);*/
+        
+        
+        // if($query->payment->status == 'PE'){
+        //     $status = $transaction::STATUS_PENDING;
+        // }
+        // if($query->payment->status == 'CO'){
+        //     $status = $transaction::STATUS_SUCCESS;
+        // }
+        // if($query->payment->status == 'CA'){
+        //     $status = $transaction::STATUS_CANCELED;
+        // }
+        // if($query->payment->status == 'CA'){
+        //     $status = $transaction::STATUS_INPROGRESS;
+        // }
+      
+        // $status = ('PE' == $query->payment->status)
+        //     ? $transaction::STATUS_PENDING
+        //     : $transaction::STATUS_SUCCESS;
+     
+        // if (isset($request->error_code)) {
+        //     \XLite\Core\OrderHistory::getInstance()->registerTransaction($this->transaction->getOrder()->getOrderId(), 'Error description: ' . $query->status_message);
+        //     $transaction->setDataCell('status', $query->status_message, null, 'C');
+        // } 
+     
+        $this->transaction->setStatus($status);
+            /*$status = ('CO' == $request->status)
+                                    ? $transaction::STATUS_SUCCESS
+                                    : $transaction::STATUS_FAILED;
+            $this->transaction->setStatus($status);
+        // $url = 'http://integration.ebanx.com/xc/?target=checkoutSuccess' . $this->getOrder()->getOrderNumber();
+        // func_header_location($url);
+        if(empty($hash)) 
+                        {
+                          // this should not happen. Only if you called your URL manually. EBANX will always pass the hashishe cigarette
+                         die("Empty hash in the response URL");
+                        }*/ 
+    }
+
+    public function getReturnOwnerTransaction()
+    {
+
+
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        
+        $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
+        $integrationkey = $method->getSetting('integrationkey');
+        $test = $method->getSetting('test');
+
+           \Ebanx\Config::set(array(
+        'integrationKey' => $integrationkey, //'d55ffec9c19a2891716dad68732dade9a312a6aeb7c874ead4a8c56dff4d7c38a49c51d4977827e7d61bb9eee3b2696bcc6a', //$this->getSetting('integrationkey'),
+        'testMode' =>  $test
+        
+            ) );
+
+
+        // var_dump(\XLite\Core\Request::getInstance()->merchant_payment_code);
+        // echo "uhudfihudf";
+        // var_dump(\XLite\Core\Database::getRepo('XLite\Model\Payment\Transaction')->findOneByPublicTxnId(\XLite\Core\Request::getInstance()->merchant_payment_code));
+        // die;
+        $hashes = array();
+        $hashes = \XLite\Core\Request::getInstance()->hash_codes;
+        var_dump($hashes);
+        die;
+        //$hash = $request->hash;
+        $query = \Ebanx\Ebanx::doQuery(array('integration_key'  => $integrationkey, //\Ebanx\Config::getIntegrationKey(),
+                                             'hash'             => $hash
+                                                                                    
+                                             )
+        );
+
+        $merc_pay_code = $query->payment->merchant_payment_code;
+        //var_dump($request);
+        //var_dump($hash);
+        
+        // var_dump(\Ebanx\Config::getIntegrationKey());
+        
+        var_dump($query);
+        var_dump($query->payment->status);
+        
+
+
+        var_dump(\XLite\Core\Database::getRepo('XLite\Model\Payment\Transaction')->findOneByPublicTxnId(\XLite\Core\Request::getInstance()->merchant_payment_code));
+
+        return \XLite\Core\Request::getInstance()->merchant_payment_code
+            ? \XLite\Core\Database::getRepo('XLite\Model\Payment\Transaction') //->findOneByPublicTxnId('rVHdi-w1wZcJuFn0')
+                ->find(
+                \XLite\Core\Request::getInstance()->merchant_payment_code
+                )
+            
+            : $merc_pay_code;
+    }
+
+
+    // public function processCallback(\XLite\Model\Payment\Transaction $transaction)
+    // {
+    //     $this->transaction = $transaction;
+
+    //     $this->logCallback(\XLite\Core\Request::getInstance()->getData());
+
+    //     echo "eita";
+    // }
+
+
 protected function getFormFields()
 {
     return     $params = array(
         'integrationkey'        => $this->getSetting('integrationkey')
        ,'payment_type_code'     => '_all'
        ,'currency_code'               => $this->getCurrencyCode() //$order->getCurrency()->getCode()         //$this->getSetting('currency')
-       ,'amount'                => $this->getOrder()->getCurrency()->roundValue($this->transaction->getValue()) //$this->transaction->getValue()
-       ,'merchant_payment_code' => $this->transaction->getTransactionId() //$this->getOrder()->getOrderNumber()
-       ,'name'                  => $this->getProfile()->getBillingAddress()->getName()
+       ,'amount'                => $this->getOrder()->getCurrency()->roundValue($this->transaction->getOrder()->getTotal()) //$this->transaction->getValue()
+       ,'merchant_payment_code' => $this->transaction->getTransactionId()
+       ,'name'                  => $this->getProfile()->getBillingAddress()->getFirstname() . ' ' . $this->getProfile()->getBillingAddress()->getLastname()
        ,'email'                 => $this->getProfile()->getLogin()
+       ,'zipcode'               => $this->getProfile()->getBillingAddress()->getZipcode()
+       ,'url'                   => $this->getReturnURL('merchant_payment_code')
 
 
     );
     
 }
-protected function assembleFormBody()
-{
-    return true;
-}
-protected function getFormMethod()
-{
-    return self::FORM_METHOD_GET;
-    //return self::FORM_METHOD_POST;
-}
+// protected function assembleFormBody()
+// $this->getReturnURL('merchant_payment_code',false,true) https://localhost/ebanx-xcart/?target=payment_return&txn_id_name=merchant_payment_code&cancel=1"
+// {
+//     return true;
+// }
 
 
+
+/*
 	public function processReturn(\XLite\Model\Payment\Transaction $transaction)
-	{  /*
+	{  
+        parent::processReturn($transaction);
+
+        echo 'estamos acá';
+        die;
+
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+
+        $status = $transaction::STATUS_SUCCESS;
+
+        $this->transaction->setStatus($status);
+
+    /*
 
         require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
 
@@ -123,10 +325,7 @@ protected function getFormMethod()
                           // this should not happen. Only if you called your URL manually. EBANX will always pass the hashishe cigarette
                          die("Empty hash in the response URL");
                         }*/
-                        return true;
-	}
-
-
+                        
 	public function getSettingsWidget()
 	{
 	    return 'modules/EBANX/EBANX/config.tpl';
