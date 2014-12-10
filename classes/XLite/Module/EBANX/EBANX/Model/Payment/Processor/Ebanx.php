@@ -195,7 +195,7 @@ protected function getFormURL()
 
     public function processCallback(\XLite\Model\Payment\Transaction $transaction)
     {
-        //parent::processCallback($transaction);
+        parent::processCallback($transaction);
         
 
         require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
@@ -207,11 +207,9 @@ protected function getFormURL()
         'integrationKey' => $integrationkey, //'d55ffec9c19a2891716dad68732dade9a312a6aeb7c874ead4a8c56dff4d7c38a49c51d4977827e7d61bb9eee3b2696bcc6a', //$this->getSetting('integrationkey'),
         'testMode' =>  $test
         ));
-
+        //\XLite\Core\Request::getInstance()->setRequestMethod('GET');
         $request = \XLite\Core\Request::getInstance();
         $hashes = explode(',', $request->hash_codes);
-
-        
 
         foreach ($hashes as $hash) 
         {   
@@ -252,6 +250,7 @@ protected function getFormURL()
                 $transaction->getOrder()->setPaymentStatusByTransaction($transaction);
 
         }
+        
     }   
 
     public function getCallbackOwnerTransaction()
