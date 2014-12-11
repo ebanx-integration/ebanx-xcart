@@ -188,10 +188,10 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
 	protected function getEbanxSettings()
 	{
-    return array(
-         'integrationkey' => $this->getSetting('integrationkey')
-        ,'test' => $this->getSetting('test') == 'true' ? true : false
-        );
+        return array(
+            'integrationkey' => $this->getSetting('integrationkey')
+           ,'test' => $this->getSetting('test') == 'true' ? true : false
+           );
 	}
 
 	public function isTestMode(\XLite\Model\Payment\Method $method)
@@ -217,8 +217,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
             parent::getAllowedCurrencies($method),
             array(
                 'USD', 'BRL'
-            )
-        );
+        ));
     }
 
     protected function getCurrencyCode()
