@@ -57,8 +57,12 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         {
             $checkoutURL = $response->redirect_url;
         }
-
-        $this->debug_to_console($response);
+        else
+        {
+            \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX:' . $response->status_code . " : " . $response->status_message);
+            return ;
+        }
+        
         return $checkoutURL;
     }
 
