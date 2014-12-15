@@ -55,7 +55,7 @@ abstract class Main extends \XLite\Module\AModule
      */
     public static function getModuleName()
     {
-        return 'Ebanx';
+        return 'EBANX';
     }
  
     /**
@@ -86,5 +86,10 @@ abstract class Main extends \XLite\Module\AModule
     public static function getDescription()
     {
         return 'EBANX Checkout Integration';
+    }
+
+    public static function getModuleType()
+    {
+        return static::MODULE_TYPE_PAYMENT;
     }
 }

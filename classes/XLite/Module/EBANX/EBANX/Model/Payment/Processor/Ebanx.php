@@ -1,5 +1,4 @@
 <?php
-namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
  
 /**
  * Copyright (c) 2014, EBANX Tecnologia da Informação Ltda.
@@ -30,6 +29,8 @@ namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
 
 class Ebanx extends \XLite\Model\Payment\Base\WebBased
 {
@@ -62,7 +63,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
             \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX:' . $response->status_code . " : " . $response->status_message);
             return ;
         }
-        
+
         return $checkoutURL;
     }
 
@@ -123,8 +124,28 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                 }
                 if($query->payment->status == 'CO')
                 {
-                    $status = $transaction::STATUS_SUCCESS;
-                    echo 'STATUS SUCCESS';           
+                    if(isset($query->payment->refunds))
+                    {
+                        $transaction->getPaymentTransaction()->getOrder()->setPaymentStatus(
+                            \XLite\Model\Order\Status\Payment::STATUS_REFUNDED
+                        );
+                        echo 'STATUS REFUNDED';
+                    }
+
+                    else
+                    {
+                        if (isset($result->payment->chargeback))
+                        {
+                            return "SKIP: payment was not updated due to chargeback.";
+                        }
+                        else
+                        {
+                            $status = $transaction::STATUS_SUCCESS;
+                            echo 'STATUS SUCCESS'; 
+                        }
+  
+                    }
+        
                 }
                 if($query->payment->status == 'CA')
                 {
@@ -228,4 +249,10 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     {
         return strtoupper($this->getOrder()->getCurrency()->getCode());
     }
+
+    public function getCheckoutTemplate(\XLite\Model\Payment\Method $method)
+    {
+        return 'modules/EBANX/EBANX/checkout.tpl';
+    }
+
 }

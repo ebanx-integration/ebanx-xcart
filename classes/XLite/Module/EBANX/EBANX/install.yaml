@@ -34,7 +34,8 @@ XLite\Model\Payment\Method:
     type: N
     translations:
       - code: en
-        name: Ebanx
+        name: 'EBANX'
+        title: 'EBANX - Boleto Bancário, TEF'
     settings:
       - name: integrationkey
       - name: test
