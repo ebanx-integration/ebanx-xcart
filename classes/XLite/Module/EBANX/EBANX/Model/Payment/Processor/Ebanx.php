@@ -42,7 +42,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
     protected function getFormURL()
     {
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
 
         $params = array();
         $params = $this->getFormFields();
@@ -60,7 +60,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         }
         else
         {
-            \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX:' . $response->status_code . " : " . $response->status_message);
+            \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX: ' . $response->status_code . ": " . $response->status_message);
             return ;
         }
 
@@ -70,7 +70,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     public function processReturn(\XLite\Model\Payment\Transaction $transaction)
     {  
         parent::processReturn($transaction);
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
@@ -97,7 +97,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     {
         parent::processCallback($transaction);
         
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
@@ -170,7 +170,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
     public function getCallbackOwnerTransaction()
     {
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/lib/ebanx-php-master/src/autoload.php';
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
