@@ -126,7 +126,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                 if($query->payment->status == 'PE')
                 {
                     $status = $transaction::STATUS_PENDING;
-                    echo 'STATUS PENDING';
+                    echo "STATUS PENDING\n";
                 }
                 if($query->payment->status == 'CO')
                 {
@@ -135,7 +135,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                         $transaction->getPaymentTransaction()->getOrder()->setPaymentStatus(
                             \XLite\Model\Order\Status\Payment::STATUS_REFUNDED
                         );
-                        echo 'STATUS REFUNDED';
+                        echo "STATUS REFUNDED\n";
                     }
 
                     else
@@ -147,7 +147,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                         else
                         {
                             $status = $transaction::STATUS_SUCCESS;
-                            echo 'STATUS SUCCESS'; 
+                            echo "STATUS SUCCESS\n"; 
                         }
   
                     }
@@ -156,12 +156,12 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                 if($query->payment->status == 'CA')
                 {
                     $status = $transaction::STATUS_CANCELED;
-                    echo 'STATUS CANCELED';
+                    echo "STATUS CANCELED\n";
                 }
                 if($query->payment->status == 'OP')
                 {
                     $status = $transaction::STATUS_INPROGRESS;
-                    echo 'STATUS OPENED';                      
+                    echo "STATUS OPENED\n";                      
                 }
 
                 $transaction->setStatus($status);
@@ -169,7 +169,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
             }
             else
             {
-                echo 'Failure in contacting EBANX';   
+                echo "Failure in contacting EBANX\n";   
             }
         }
     }   
