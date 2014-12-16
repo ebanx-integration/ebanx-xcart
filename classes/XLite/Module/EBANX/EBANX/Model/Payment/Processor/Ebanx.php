@@ -35,6 +35,11 @@ namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
 class Ebanx extends \XLite\Model\Payment\Base\WebBased
 {
 
+    protected function callEbanxLib()
+    {
+        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+    }
+
     protected function assembleFormBody()
     {
         return true;
@@ -42,7 +47,8 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
     protected function getFormURL()
     {
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+        
+        $this->callEbanxLib();
 
         $params = array();
         $params = $this->getFormFields();
@@ -70,7 +76,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     public function processReturn(\XLite\Model\Payment\Transaction $transaction)
     {  
         parent::processReturn($transaction);
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+        $this->callEbanxLib();
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
@@ -97,7 +103,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     {
         parent::processCallback($transaction);
         
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+        $this->callEbanxLib();
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
@@ -170,7 +176,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
     public function getCallbackOwnerTransaction()
     {
-        require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+        $this->callEbanxLib();
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
         $integrationkey = $method->getSetting('integrationkey');
         $test = $method->getSetting('test');
@@ -195,7 +201,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         return $params = array(
             'integrationkey'        => $this->getSetting('integrationkey')
            ,'payment_type_code'     => '_all'
-           ,'currency_code'               => $this->getCurrencyCode()
+           ,'currency_code'         => $this->getCurrencyCode()
            ,'amount'                => $this->getOrder()->getCurrency()->roundValue($this->transaction->getOrder()->getTotal())
            ,'merchant_payment_code' => $this->transaction->getTransactionId()
            ,'order_number'          => $this->getOrder()->getOrderId()
@@ -206,30 +212,30 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
            );
     }
                         
-	public function getSettingsWidget()
-	{
-	    return 'modules/EBANX/EBANX/config.tpl';
-	}
+    public function getSettingsWidget()
+    {
+        return 'modules/EBANX/EBANX/config.tpl';
+    }
 
-	protected function getEbanxSettings()
-	{
+    protected function getEbanxSettings()
+    {
         return array(
             'integrationkey' => $this->getSetting('integrationkey')
            ,'test' => $this->getSetting('test') == 'true' ? true : false
            );
-	}
+    }
 
-	public function isTestMode(\XLite\Model\Payment\Method $method)
-	{
-    	return $method->getSetting('test') != 'false';
-	}
-	
-	public function isConfigured(\XLite\Model\Payment\Method $method)
-	{
-    	return parent::isConfigured($method)
-	        && $method->getSetting('integrationkey')
-	        && $method->getSetting('test');
-	}
+    public function isTestMode(\XLite\Model\Payment\Method $method)
+    {
+        return $method->getSetting('test') != 'false';
+    }
+    
+    public function isConfigured(\XLite\Model\Payment\Method $method)
+    {
+        return parent::isConfigured($method)
+            && $method->getSetting('integrationkey')
+            && $method->getSetting('test');
+    }
 
     public function getAdminIconURL(\XLite\Model\Payment\Method $method)
     {
