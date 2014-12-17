@@ -34,7 +34,6 @@ namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
 
 class Ebanx extends \XLite\Model\Payment\Base\WebBased
 {
-
     protected function callEbanxLib()
     {
         require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
@@ -54,7 +53,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
     protected function getFormURL()
     {
-        
         $this->callEbanxLib();
 
         $params = array();
@@ -64,15 +62,11 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
         if($response->status == 'SUCCESS')
         {
-            $checkoutURL = $response->redirect_url;
-        }
-        else
-        {
-            \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX: ' . $response->status_code . ": " . $response->status_message);
-            return ;
+            return $response->redirect_url;
         }
 
-        return $checkoutURL;
+        \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX: ' . $response->status_code . ": " . $response->status_message);
+        return ;
     }
 
     public function processReturn(\XLite\Model\Payment\Transaction $transaction)
@@ -121,7 +115,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                         );
                         echo "STATUS REFUNDED\n";
                     }
-
                     else
                     {
                         if (isset($result->payment->chargeback))
@@ -227,5 +220,4 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     {
         return 'modules/EBANX/EBANX/checkout.tpl';
     }
-
 }
