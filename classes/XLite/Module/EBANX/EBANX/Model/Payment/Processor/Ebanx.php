@@ -38,6 +38,13 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     protected function callEbanxLib()
     {
         require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
+
+        $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
+        
+        \Ebanx\Config::set(array(
+            'integrationKey' => $method->getSetting('integrationkey'),
+            'testMode' => $method->getSetting('test') == 'true' ?  true : false,
+        ));
     }
 
     protected function assembleFormBody()
@@ -52,11 +59,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
         $params = array();
         $params = $this->getFormFields();
-
-        \Ebanx\Config::set(array(
-            'integrationKey' => $this->getSetting('integrationkey'),
-            'testMode' =>  $this->getSetting('test'),
-        ));
 
         $response = \Ebanx\Ebanx::doRequest($params);
 
@@ -76,18 +78,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     public function processReturn(\XLite\Model\Payment\Transaction $transaction)
     {  
         parent::processReturn($transaction);
-        $this->callEbanxLib();
-        $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
-        $integrationkey = $method->getSetting('integrationkey');
-        $test = $method->getSetting('test');
-
-        \Ebanx\Config::set(array(
-            'integrationKey' => $integrationkey,
-            'testMode' =>  $test
-        ));
-              
-        $operation = \XLite\Core\Request::getInstance()->operation;
-     
+    
         $this->transaction->setStatus($transaction::STATUS_PENDING);
     }
 
@@ -104,13 +95,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         parent::processCallback($transaction);
         
         $this->callEbanxLib();
-        $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
-        $integrationkey = $method->getSetting('integrationkey');
-        $test = $method->getSetting('test');
-
-        \Ebanx\Config::set(array(
-            'integrationKey' => $integrationkey 
-        ));
 
         $request = \XLite\Core\Request::getInstance();
         $hashes = explode(',', $request->hash_codes);
@@ -177,14 +161,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     public function getCallbackOwnerTransaction()
     {
         $this->callEbanxLib();
-        $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
-        $integrationkey = $method->getSetting('integrationkey');
-        $test = $method->getSetting('test');
-
-        \Ebanx\Config::set(array(
-            'integrationKey' => $integrationkey,
-            'testMode' =>  $test
-        ));
 
         $request = \XLite\Core\Request::getInstance();
         $hashes = explode(',', $request->hash_codes);
@@ -217,14 +193,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         return 'modules/EBANX/EBANX/config.tpl';
     }
 
-    protected function getEbanxSettings()
-    {
-        return array(
-            'integrationkey' => $this->getSetting('integrationkey')
-           ,'test' => $this->getSetting('test') == 'true' ? true : false
-           );
-    }
-
     public function isTestMode(\XLite\Model\Payment\Method $method)
     {
         return $method->getSetting('test') != 'false';
@@ -233,8 +201,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     public function isConfigured(\XLite\Model\Payment\Method $method)
     {
         return parent::isConfigured($method)
-            && $method->getSetting('integrationkey')
-            && $method->getSetting('test');
+            && $method->getSetting('integrationkey');
     }
 
     public function getAdminIconURL(\XLite\Model\Payment\Method $method)
