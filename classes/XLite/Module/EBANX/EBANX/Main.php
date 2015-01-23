@@ -1,5 +1,5 @@
 <?php
-
+namespace XLite\Module\EBANX\EBANX;
 
 /**
  * Copyright (c) 2014, EBANX Tecnologia da Informação Ltda.
@@ -30,8 +30,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-namespace XLite\Module\EBANX\EBANX;
  
 /**
 * Module description

@@ -34,12 +34,14 @@ namespace XLite\Module\EBANX\EBANX\Model\Payment\Processor;
 
 class Ebanx extends \XLite\Model\Payment\Base\WebBased
 {
+
     protected function callEbanxLib()
     {
         require_once LC_DIR_MODULES . 'EBANX/EBANX/ebanx-php/src/autoload.php';
 
         $method = \XLite\Core\Database::getRepo('XLite\Model\Payment\Method')->findOneBy(array('service_name' => 'Ebanx'));
-        
+        $test = $method->getSetting('test');
+
         \Ebanx\Config::set(array(
             'integrationKey' => $method->getSetting('integrationkey'),
             'testMode' => $method->getSetting('test') == 'true' ?  true : false,
@@ -62,11 +64,15 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
         if($response->status == 'SUCCESS')
         {
-            return $response->redirect_url;
+            $checkoutURL = $response->redirect_url;
+        }
+        else
+        {
+            \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX: ' . $response->status_code . ": " . $response->status_message);
+            return ;
         }
 
-        \XLite\Core\TopMessage::addError('Erro processando pagamento! EBANX: ' . $response->status_code . ": " . $response->status_message);
-        return ;
+        return $checkoutURL;
     }
 
     public function processReturn(\XLite\Model\Payment\Transaction $transaction)
@@ -115,6 +121,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                         );
                         echo "STATUS REFUNDED\n";
                     }
+
                     else
                     {
                         if (isset($result->payment->chargeback))
@@ -178,6 +185,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
            ,'email'                 => $this->getProfile()->getLogin()
            ,'zipcode'               => $this->getProfile()->getBillingAddress()->getZipcode()
            ,'url'                   => $this->getReturnURL('merchant_payment_code')
+           ,'country'               => $this->getCountryCode() //\XLite::getController()->getCart()->getProfile()
            );
     }
                         
@@ -202,18 +210,26 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         return true;
     }
 
-    protected function getAllowedCurrencies(\XLite\Model\Payment\Method $method)
-    {
-        return array_merge(
-            parent::getAllowedCurrencies($method),
-            array(
-                'USD', 'BRL'
-        ));
-    }
-
     protected function getCurrencyCode()
     {
         return strtoupper($this->getOrder()->getCurrency()->getCode());
+    }
+
+    protected function getCountryCode()
+    {   
+        $country = strtoupper($this->getProfile()->getBillingAddress()->getCountry()->getCode3());
+
+        if($country == 'PER')
+        {
+            $country = 'pe';
+        }
+
+        if($country == 'BRA')
+        {
+            $country = 'br';
+        }
+
+        return $country;
     }
 
     public function getCheckoutTemplate(\XLite\Model\Payment\Method $method)
