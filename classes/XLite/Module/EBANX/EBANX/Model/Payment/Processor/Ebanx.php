@@ -185,7 +185,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
            ,'email'                 => $this->getProfile()->getLogin()
            ,'zipcode'               => $this->getProfile()->getBillingAddress()->getZipcode()
            ,'url'                   => $this->getReturnURL('merchant_payment_code')
-           ,'country'               => $this->getCountryCode() //\XLite::getController()->getCart()->getProfile()
+           ,'country'               => $this->getCountryCode()
            );
     }
                         
