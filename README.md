@@ -34,4 +34,5 @@ git clone --recursive https://github.com/ebanx/ebanx-xcart.git
 11. That's all!
 
 ## Changelog
+* 1.1.0: added peruvian payment methods.
 * 1.0.0: first release.
