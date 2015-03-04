@@ -48,11 +48,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
         ));
     }
 
-    protected function assembleFormBody()
-    {
-        return true;
-    }
-
     protected function getFormURL()
     {
         $this->callEbanxLib();
@@ -114,7 +109,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
                 }
                 if($query->payment->status == 'CO')
                 {
-                    if(isset($query->payment->refunds))
+                    if ($request->notification_type == 'refund')
                     {
                         $transaction->getPaymentTransaction()->getOrder()->setPaymentStatus(
                             \XLite\Model\Order\Status\Payment::STATUS_REFUNDED
@@ -124,7 +119,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
 
                     else
                     {
-                        if (isset($result->payment->chargeback))
+                        if ($request->notification_type == 'chargeback')
                         {
                             return "SKIP: payment was not updated due to chargeback.";
                         }
@@ -185,7 +180,7 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
            ,'email'                 => $this->getProfile()->getLogin()
            ,'zipcode'               => $this->getProfile()->getBillingAddress()->getZipcode()
            ,'url'                   => $this->getReturnURL('merchant_payment_code')
-           ,'country'               => $this->getCountryCode()
+           ,'country'               => strtoupper($this->getProfile()->getBillingAddress()->getCountry()->getCode())
            );
     }
                         
@@ -213,23 +208,6 @@ class Ebanx extends \XLite\Model\Payment\Base\WebBased
     protected function getCurrencyCode()
     {
         return strtoupper($this->getOrder()->getCurrency()->getCode());
-    }
-
-    protected function getCountryCode()
-    {   
-        $country = strtoupper($this->getProfile()->getBillingAddress()->getCountry()->getCode3());
-
-        if($country == 'PER')
-        {
-            $country = 'pe';
-        }
-
-        if($country == 'BRA')
-        {
-            $country = 'br';
-        }
-
-        return $country;
     }
 
     public function getCheckoutTemplate(\XLite\Model\Payment\Method $method)

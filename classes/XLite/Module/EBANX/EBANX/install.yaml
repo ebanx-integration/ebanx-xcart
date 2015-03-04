@@ -35,7 +35,7 @@ XLite\Model\Payment\Method:
     translations:
       - code: en
         name: 'EBANX'
-        title: 'EBANX - Boleto Bancário, TEF'
+        title: 'EBANX - Boleto Bancário, TEF, PagoEfectivo, SafetyPay, OXXO'
     settings:
       - name: integrationkey
       - name: test
