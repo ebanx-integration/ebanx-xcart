@@ -1,5 +1,5 @@
 <?php
-// @deprecated This plugin is deprecated and no longer maintained. See https://www.ebanx.com/business/en/developers
+// @deprecated This plugin is deprecated and no longer maintained. See https://docs.ebanx.com/
 namespace XLite\Module\EBANX\EBANX;
 
 /**
